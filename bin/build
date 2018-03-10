@@ -1,0 +1,56 @@
+#!/bin/sh
+
+# This script is responsible for building every image on this repository
+# Additionally, it also supports pushing the images to the Docker repo listed
+# on the same folder as the image.
+
+help() {
+  echo "Use $0 <image-name|*> [--push]"
+  echo
+  echo "  This will build the image located at the 'image-name'. Use 'all' if"
+  echo "  you want to build all images."
+  exit 1
+}
+
+build() {
+  image=$1
+  push=$2
+
+  if [ "$image" = "all" ]; then
+    image="*"
+  fi
+
+  for path in images/$image; do
+    test -d "$path" || break # Exit if the file doesn't exist
+
+    # Get the name of the repo of the image
+    tag=$(grep 'LABEL.*repository=.*' "$path/Dockerfile" | \
+      sed -E 's/LABEL .*repository="(.*)".*/\1/')
+
+    if [ -z "$tag" ]; then
+      echo "ERROR: The image '$path' Dockerfile does not contain a LABEL 'repository' on it!" >&2
+      exit 1
+    fi
+
+    timestamp=$(date "+%Y%m%d%H%M%S")
+    ( cd "$path" && docker build -t "$tag:latest" -t "$tag:$timestamp" . )
+
+    # Pushes the image if requested
+    if [ "$push" = "--push" ]; then
+      docker push "$tag:$timestamp"
+      docker push "$tag:latest"
+    fi
+  done
+}
+
+# Execute the requested action
+# ============================
+
+# cd to root path
+cd "$(dirname "$0")/.." || exit;
+
+if [ "$#" -gt 0 ]; then
+  build "$@"
+else
+  help
+fi
