@@ -10,6 +10,7 @@ FROM kriansa/insurgency-server
 # Runtime settings
 ENV RCON_PASSWORD=""
 ENV SV_PASSWORD=""
+ENV MAXPLAYERS="48"
 ENV MAPNAME="market_coop checkpoint"
 
 # Send our custom server.cfg to server and set the right permissions to it

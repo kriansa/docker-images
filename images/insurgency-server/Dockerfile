@@ -8,6 +8,7 @@ ARG GAME_ID=237410
 # Runtime settings
 ENV RCON_PASSWORD=""
 ENV SV_PASSWORD=""
+ENV MAXPLAYERS="48"
 ENV MAPNAME="market_coop checkpoint"
 
 # Set the server path
@@ -22,6 +23,9 @@ RUN steamcmd +login anonymous \
 # Set our workdir
 WORKDIR $SERVER_PATH
 
+# Create the banned files to be used to store ban info
+RUN touch insurgency/cfg/servervoiceban.cfg insurgency/cfg/banned_user.cfg
+
 # Required step to run srcds
 ENV LD_LIBRARY_PATH="$SERVER_PATH:$SERVER_PATH/bin:${LD_LIBRARY_PATH}"
 
@@ -30,4 +34,5 @@ EXPOSE 27015/tcp 27015/udp
 
 # Default run command
 CMD ./srcds_linux -port 27015 -ip 0.0.0.0 +map $MAPNAME \
-  +rcon_password "$RCON_PASSWORD" +sv_password "$SV_PASSWORD"
+  +maxplayers $MAXPLAYERS +rcon_password "$RCON_PASSWORD" \
+  +sv_password "$SV_PASSWORD"
