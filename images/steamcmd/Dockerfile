@@ -1,4 +1,4 @@
-FROM debian:9
+FROM debian:9.4
 LABEL maintainer="Daniel Pereira <daniel@garajau.com.br>"
 LABEL repository="kriansa/steamcmd"
 
