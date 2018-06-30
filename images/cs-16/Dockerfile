@@ -10,12 +10,7 @@ ENV MAPNAME="de_dust2"
 
 # Copy needed files to their folders
 RUN mkdir $HOME/hlds
-COPY files/ $HOME/hlds
-
-# Change permissions on files added by COPY
-USER root
-RUN chown -R steam:steam $HOME/hlds
-USER steam
+COPY --chown=steam:steam files/ $HOME/hlds
 
 # Try to install HLDS. This may take some time.
 # Steam has this bug that they are not very interested in fixing. The
@@ -28,6 +23,13 @@ RUN while test "$status" != "Success! App '90' fully installed."; do \
   +force_install_dir $HOME/hlds +app_update 90 validate +quit | \
   tail -1); \
 done
+
+# Install dumb-init
+RUN wget -O /usr/local/bin/dumb-init \
+  https://github.com/Yelp/dumb-init/releases/download/v1.2.1/dumb-init_1.2.1_amd64 && \
+  chmod +x /usr/local/bin/dumb-init
+
+ENTRYPOINT ["/usr/local/bin/dumb-init", "--"]
 
 # Set our workdir
 WORKDIR $HOME/hlds
