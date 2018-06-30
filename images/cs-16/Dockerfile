@@ -36,10 +36,6 @@ WORKDIR $HOME/hlds
 RUN mkdir -p $HOME/.steam/sdk32/
 RUN ln -s $HOME/hlds/steamclient.so $HOME/.steam/sdk32/steamclient.so
 
-# Create subfolders so we can mount on them
-RUN mkdir -p $HOME/hlds/cstrike/addons $HOME/hlds/cstrike/cfgs \
-  $HOME/hlds/cstrike_downloads/maps
-
 # Expose ports
 EXPOSE 27015/tcp 27015/udp
 
