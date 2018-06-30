@@ -13,10 +13,15 @@ RUN ln -snf /usr/share/zoneinfo/$TIMEZONE /etc/localtime && \
   echo "steam steam/purge note" | /usr/bin/debconf-set-selections && \
   echo "steamcmd	steam/license	note" | /usr/bin/debconf-set-selections && \
   echo "steamcmd	steam/question	select I AGREE" | /usr/bin/debconf-set-selections && \
-  apt-get update && apt-get install -y steamcmd less net-tools ca-certificates && \
+  apt-get update && apt-get install -y steamcmd less net-tools ca-certificates wget && \
   rm -rf /var/lib/apt/lists/* && \
   useradd -ms /bin/bash steam && \
-  /usr/games/steamcmd +quit
+  /usr/games/steamcmd +quit && \
+  wget -O /usr/local/bin/dumb-init \
+  https://github.com/Yelp/dumb-init/releases/download/v1.2.1/dumb-init_1.2.1_amd64 && \
+  chmod +x /usr/local/bin/dumb-init
+
+ENTRYPOINT ["/usr/local/bin/dumb-init", "--"]
 
 # Select the unprivilegd user (steam)
 USER steam

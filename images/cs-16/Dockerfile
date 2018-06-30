@@ -24,19 +24,12 @@ RUN while test "$status" != "Success! App '90' fully installed."; do \
   tail -1); \
 done
 
-# Install dumb-init
-RUN wget -O /usr/local/bin/dumb-init \
-  https://github.com/Yelp/dumb-init/releases/download/v1.2.1/dumb-init_1.2.1_amd64 && \
-  chmod +x /usr/local/bin/dumb-init
-
-ENTRYPOINT ["/usr/local/bin/dumb-init", "--"]
-
 # Set our workdir
 WORKDIR $HOME/hlds
 
 # Avoid some warning messages due the lack of this file in the right path
-RUN mkdir -p $HOME/.steam/sdk32/
-RUN ln -s $HOME/hlds/steamclient.so $HOME/.steam/sdk32/steamclient.so
+RUN mkdir -p $HOME/.steam/sdk32/ && \
+  ln -s $HOME/hlds/steamclient.so $HOME/.steam/sdk32/steamclient.so
 
 # Expose ports
 EXPOSE 27015/tcp 27015/udp
