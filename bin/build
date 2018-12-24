@@ -5,7 +5,7 @@
 # on the same folder as the image.
 
 help() {
-  echo "Use $0 <image-name|*> [--push]"
+  echo "Use $0 <image-name|all> [--push]"
   echo
   echo "  This will build the image located at the 'image-name'. Use 'all' if"
   echo "  you want to build all images."
