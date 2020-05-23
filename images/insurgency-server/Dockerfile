@@ -1,4 +1,4 @@
-FROM kriansa/steamcmd:2018-12-24
+FROM kriansa/steamcmd:2020-05-23
 LABEL maintainer="Daniel Pereira <daniel@garajau.com.br>"
 LABEL repository="kriansa/insurgency-server"
 
