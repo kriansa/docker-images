@@ -20,8 +20,10 @@ ARG APT_DEBUG_PKGS="less vim nano curl iputils-ping iproute2 bash procps"
 ARG ADD_DEBUG_PKGS="yes"
 
 # Reset variables defined by ruby base image
-ENV GEM_HOME= BUNDLE_SILENCE_ROOT_WARNING= 
+ENV GEM_HOME= BUNDLE_SILENCE_ROOT_WARNING=
 ENV BUNDLE_APP_CONFIG=.bundle BUNDLE_JOBS=8
+# Ensure the bundle install always installs to vendor/bundle
+ENV BUNDLE_PATH=vendor/bundle BUNDLE_DISABLE_SHARED_GEMS=true
 
 # Install packages needed to build native ruby gems
 RUN apt-get update && apt-get install --yes $APT_PKGS && \
