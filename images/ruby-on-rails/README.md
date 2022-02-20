@@ -16,3 +16,37 @@ COPY --chown=1000:1000 ./ ./
 
 RUN bundle install && echo "$APP_VERSION" > /srv/VERSION
 ```
+
+## Rebuilding the image with a different UID/GID
+
+In the eventual case you need to set a different **UID/GID** for the appuser, you can extend the
+image with the following `Dockerfile`:
+
+```Dockerfile
+FROM ghcr.io/kriansa/docker-images/ruby-on-rails:latest
+
+ARG UID=2222
+ARG GID=3333
+
+# Reset the uid for `appuser`
+USER root
+RUN set-uid $UID $GID
+USER appuser
+```
+
+## Kubernetes tips
+
+When running your app on k8s, just make sure you don't override the `command`, instead use `args`
+for specifying a different entrypoint in case you need.
+
+E.g.:
+
+```yaml
+      containers:
+        - name: main
+          args:
+            - bin/rails
+            - db:migrate
+```
+
+> Don't override `command`, only `args`.
