@@ -11,15 +11,9 @@ on:
 
 jobs:
   build-main-image:
-    name: Build main image
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - uses: ./.github/workflows/build.yml@main
-        with:
-          image_path: ruby-on-rails
+    uses: ./.github/workflows/build.yml
+    with:
+      image_path: ruby-on-rails
   #
   # build-dev-image:
   #   name: Build debug image
