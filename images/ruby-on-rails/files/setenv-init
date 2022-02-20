@@ -1,0 +1,43 @@
+#!/bin/sh
+#
+# This is a "dumb-init" whose only purpose is to evaluate the .env file before running a command in
+# the container environment.
+#
+# Loading a variable from .env will never override the ones already set in the container (i.e. set
+# externally through docker run or kubernetes environment)
+#
+# Author: Daniel Pereira <daniel@garajau.com.br>
+
+main() {
+  load_env "$(pwd | sed 's#/$##')/.env"
+
+  # Then we can proceed with the CMD
+  exec "$@"
+}
+
+# Load environment variables, but don't overwrite variables already set so we can override variables
+# via container vars
+load_env() {
+  env_file=$1
+
+  # Ensure file is present and readable
+  test -r "$env_file" || return
+
+  # Let's get the current variables before modifying the scope
+  env="$(printenv | sed -E -e 's/"/\\"/g' -e 's/=(.*)/="\1"/')"
+
+  # Then enable auto-export
+  set -a
+
+  # Now we run the .env, exporting all defined variables
+  # shellcheck disable=SC1090
+  . "$env_file" || exit 1
+
+  # Then we disable auto-export
+  set +a
+
+  # Re-set the previous variables to ensure previously exported variables have higher precedence
+  eval "$env"
+}
+
+main "$@"
