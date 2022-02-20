@@ -17,7 +17,7 @@ ARG GID=1000
 # default and you must set `ADD_DEBUG_PKGS=yes`
 ARG APT_PKGS="make gcc g++ libmysqld-dev libpq-dev git xz-utils"
 ARG APT_DEBUG_PKGS="less vim nano curl iputils-ping iproute2 bash procps"
-ARG ADD_DEBUG_PKGS="yes"
+ARG ADD_DEBUG_PKGS="no"
 
 # Reset variables defined by ruby base image
 ENV GEM_HOME= BUNDLE_SILENCE_ROOT_WARNING=
@@ -33,10 +33,10 @@ RUN apt-get update && apt-get install --yes $APT_PKGS && \
 # Create user/group and make it own /srv
 RUN groupadd --gid $GID appuser && \
   useradd --create-home --shell /bin/sh --uid $UID --gid $GID appuser && \
-  chown $GID:$UID /srv
+  chown $UID:$GID /srv
 
-# Copy our init file
-COPY files/setenv-init /bin/setenv-init
+# Copy our bin files
+COPY files/ /bin/
 
 # Set server entrypoint
 WORKDIR /srv

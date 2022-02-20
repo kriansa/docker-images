@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+# This script resets the appuser UID/GID from the built one.
+#
+# It's useful when we want to use the debug version of this image and we want to dynamically assign
+# a different UID/GID as the appuser, so we don't need to rebuild the image.
+#
+# It goes without saying that this script needs to be run as root.
+#
+# Author: Daniel Pereira <daniel@garajau.com.br>
+
+help() {
+  echo "Usage: set-uid <UID> [<GID>]"
+  echo "Sets the UID/GID to the 'appuser' and change the ownership of \$HOME and /srv folders."
+}
+
+main() {
+  uid=$1
+  gid=$2
+
+  if [ $# -lt 1 ]; then
+    echo "You need to pass at least the GID parameter"
+    echo "Use set-uid --help for usage"
+    exit 1
+  fi
+
+  if [ "$1" = "--help" ]; then
+    help
+    exit
+  fi
+
+  test -n "$uid" && usermod -u "$uid" appuser
+  test -n "$gid" && groupmod -g "$gid" appuser
+  chown -R appuser:appuser /home/appuser
+  chown appuser:appuser /srv
+
+  echo "Re-assignment of UID/GID for appuser run successfully!"
+}
+
+main "$@"
