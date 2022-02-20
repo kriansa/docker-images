@@ -13,7 +13,7 @@ ARG GID=1000
 # This is the list of packages required to build most Ruby gems used for Rails apps. An extended
 # list of debug packages is useful for development environments where you want debugging utilities.
 # They are not installed by default and you must set `ADD_DEBUG_PKGS=yes`
-ARG APT_PKGS="make gcc g++ libmysqld-dev libpq-dev git xz-utils"
+ARG APT_PKGS="make gcc g++ libmysqld-dev libpq-dev libsqlite3-dev git xz-utils"
 ARG APT_DEBUG_PKGS="less vim nano curl iputils-ping iproute2 bash procps"
 ARG ADD_DEBUG_PKGS="no"
 
