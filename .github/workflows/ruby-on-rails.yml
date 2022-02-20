@@ -1,0 +1,29 @@
+---
+name: Build ruby-on-rails image
+
+on:
+  push:
+    paths:
+      - images/ruby-on-rails/**
+    branches:
+      - main
+
+jobs:
+  build-main-image:
+    name: Build main image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./github/workflows/build.yml
+        with:
+          image_path: ruby-on-rails
+
+  build-dev-image:
+    name: Build debug image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./github/workflows/build.yml
+        with:
+          image_path: ruby-on-rails
+          output_tag: debug
+          build_args: |
+            ADD_DEBUG_PKGS=yes

@@ -1,0 +1,65 @@
+---
+name: Build docker image
+
+on:
+  workflow_call:
+    inputs:
+      image_path:
+        required: true
+        type: string
+      output_tag:
+        required: false
+        type: string
+      build_args:
+        required: false
+        type: string
+
+env:
+  IMAGE_NAME: ghcr.io/kriansa/docker-images/${{ inputs.image_path }}
+
+jobs:
+  build-and-push-image:
+    name: Build and push the Docker image application
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set image tags
+        id: image_tags
+        run: |
+          VERSION=$(date '+%Y-%m-%d')
+
+          # Define the tagnames for this image
+          if [ "${{ inputs.output_tag }}" != "" ]; then
+            TAGS="${IMAGE_NAME}:${{ inputs.output_tag }},${IMAGE_NAME}:${{ inputs.output_tag }}-${VERSION}"
+          else
+            TAGS="${IMAGE_NAME}:latest,${IMAGE_NAME}:${VERSION}"
+          fi
+
+          echo ::set-output name=tags::${TAGS}
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push container image
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: images/${{ inputs.image_path }}
+          push: true
+          tags: ${{ steps.image_tags.outputs.tags }}
+          build-args: ${{ inputs.build_args }}
+
+      - name: Delete old images
+        uses: actions/delete-package-versions@v2
+        with:
+          package-name: ${{ env.IMAGE_NAME }}
+          min-versions-to-keep: 2
