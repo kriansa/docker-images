@@ -12,7 +12,7 @@ FROM ghcr.io/kriansa/docker-images/ruby-on-rails:latest
 ARG APP_VERSION=unspecified
 
 # Copy everything to the destination server path using the right permissions
-COPY --chown=1000:1000 ./ ./
+COPY --chown=appuser:appuser ./ ./
 
 RUN bundle install && echo "$APP_VERSION" > /srv/VERSION
 ```
