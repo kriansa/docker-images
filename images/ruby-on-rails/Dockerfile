@@ -1,6 +1,6 @@
 FROM docker.io/ruby:3.1.1-slim-bullseye
 LABEL maintainer="Daniel Pereira <daniel@garajau.com.br>"
-LABEL org.opencontainers.image.source https://github.com/kriansa/docker-images
+LABEL org.opencontainers.image.source="https://github.com/kriansa/docker-images"
 
 # Set the UID/GID that will be the owner of `/srv`
 # This increases the security by running the service as a unprivileged user instead of root. Not all
@@ -40,7 +40,7 @@ COPY files/ /bin/
 # Set server entrypoint
 WORKDIR /srv
 ENTRYPOINT [ "/bin/setenv-init" ]
-USER "appuser"
+USER appuser
 
 # Execute the server by default
 CMD [ "bin/rails", "server" ]
