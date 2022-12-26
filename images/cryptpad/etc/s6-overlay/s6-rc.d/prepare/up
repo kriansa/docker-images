@@ -1,0 +1,50 @@
+# Inflate nginx config
+if {
+  with-contenv 
+  importas CRYPTPAD_URL CRYPTPAD_URL
+  backtick URL_DOMAIN { pipeline { echo $CRYPTPAD_URL } sed "s#.*://##" }
+
+  pipeline {
+    cat /etc/nginx/nginx.conf
+  }
+
+  pipeline {
+    importas REAL_IP_HEADER REAL_IP_HEADER
+    ifelse { test -z $REAL_IP_HEADER }
+    { sed -E "s/real_ip_header .*;/# real_ip_header <none>;/" }
+    cat -
+  }
+
+  pipeline {
+    importas REAL_IP_TRUSTED_IPS REAL_IP_TRUSTED_IPS
+    ifelse { test -z $REAL_IP_TRUSTED_IPS }
+    { sed -E "s/set_real_ip_from .*;/# set_real_ip_from <none>;/" }
+    cat -
+  }
+
+  redirfd -w 1 /etc/nginx/nginx-final.conf
+  envsubst "$URL_DOMAIN $REAL_IP_TRUSTED_IPS $REAL_IP_HEADER"
+}
+
+# Then inflate cryptpad config
+define config_original /cryptpad/config/config.js
+define config_final /cryptpad/config-final.js
+backtick -E CRYPTPAD_URL { with-contenv printenv CRYPTPAD_URL }
+foreground { if -n { test -f $config_original } cp /cryptpad/config/config.example.js $config_original }
+if {
+  redirfd -w 1 $config_final sed -E
+    -e "s#^([/\t ])?*httpUnsafeOrigin:.?*,$#    httpUnsafeOrigin: '${CRYPTPAD_URL}',#"
+    -e "s#^([/\t ])?*httpSafeOrigin:.?*,$#    httpSafeOrigin: '${CRYPTPAD_URL}',#"
+    -e "s#^([/\t ])?*httpAddress:.?*,$#    httpAddress: '0.0.0.0',#"
+    -e "s#^([/\t ])?*httpPort:.?*,$#    httpPort: 3000,#"
+    -e "s#^([/\t ])?*httpSafePort:.?*,$#    httpSafePort: 0,#"
+  $config_original
+}
+
+# Drop permissions
+cd /cryptpad
+s6-setuidgid cryptpad
+
+# Only export needed variables and then build it
+export CRYPTPAD_CONFIG $config_final
+npm run build

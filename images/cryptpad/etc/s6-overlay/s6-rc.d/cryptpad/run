@@ -1,0 +1,6 @@
+#!/bin/sh
+
+exec 2>&1 # redirects stderr to stdout
+
+export CRYPTPAD_CONFIG=/cryptpad/config-final.js
+cd /cryptpad && exec s6-setuidgid cryptpad npm start

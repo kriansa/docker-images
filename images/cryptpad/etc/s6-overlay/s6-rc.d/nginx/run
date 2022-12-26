@@ -1,0 +1,5 @@
+#!/bin/sh
+
+exec 2>&1 # redirects stderr to stdout
+
+exec nginx -g "daemon off;" -c /etc/nginx/nginx-final.conf

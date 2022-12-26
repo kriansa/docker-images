@@ -1,0 +1,56 @@
+FROM node:16.19.0-bullseye
+
+# Set application versions
+ARG CRYPTPAD_VERSION=5.2.1
+ARG S6_OVERLAY_VERSION=3.1.2.1
+
+# Set the UID/GID that will be the owner of `/cryptpad` dynamically
+# This increases the security by running the service as a unprivileged user instead of root. Not all
+# container platforms offers user namespacing for increased user isolation, thus this is currently a
+# recommendation among specialists.
+ARG UID=1000
+ARG GID=1000
+
+LABEL org.opencontainers.image.authors="Daniel Pereira <daniel@garajau.com.br>"
+LABEL org.opencontainers.image.source="https://github.com/kriansa/docker-images"
+
+# Install requirements
+RUN apt-get update
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -yq --no-install-recommends gettext-base nginx
+RUN rm -rf /var/lib/{apt,dpkg}
+RUN npm install -g bower
+
+# Install S6
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
+RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && rm /tmp/s6-overlay-noarch.tar.xz
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz /tmp
+RUN tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz && rm /tmp/s6-overlay-x86_64.tar.xz
+
+# Add the user
+RUN userdel node
+RUN groupadd --gid $GID cryptpad
+RUN useradd cryptpad --uid $UID --gid $GID --create-home
+RUN mkdir /cryptpad && chown cryptpad:cryptpad /cryptpad
+USER cryptpad
+WORKDIR /cryptpad
+
+# Pull cryptpad (using wget because cache headers sent by github enforces a re-download everytime)
+RUN wget -qO cryptpad.tar.gz https://github.com/xwiki-labs/cryptpad/archive/refs/tags/${CRYPTPAD_VERSION}.tar.gz
+
+# Extract then install its dependencies
+RUN tar --strip-components=1 -zxpf cryptpad.tar.gz && rm cryptpad.tar.gz
+RUN npm install --omit=dev && bower install
+
+# Copy service definitions and configs
+COPY --chown=root etc /etc
+
+# Declare exposed port
+EXPOSE 80
+
+# Stop the container whenever a service fails to start and make it less verbose
+ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=2
+ENV S6_VERBOSITY=1
+
+# Run as root
+USER root
+CMD ["/init"]
