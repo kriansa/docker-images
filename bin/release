@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Helper for releasinh these images on Docker Hub
+# Helper for releasing these images on Docker Hub
 
 # Get the tag for the current release
 release_number="$(date "+%Y-%m-%d")"

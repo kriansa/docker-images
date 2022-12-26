@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# This is a "dumb-init" whose only purpose is to evaluate the .env file before running a command in
+# This is a "dumb-init" whose sole purpose is to evaluate the .env file before running a command in
 # the container environment.
 #
 # Loading a variable from .env will never override the ones already set in the container (i.e. set
