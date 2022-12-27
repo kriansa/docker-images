@@ -42,6 +42,10 @@ To make configuration as easy as possible, you can start the container using the
 * **REAL_IP_TRUSTED_IPS** - Set the original client connecting IP CIDR that is trusted to send the
   header defined above. (e.g. _0.0.0.0/0_)
 
+On a particular slow computer, you will also need to increase the max time S6 will wait for the
+services to get up. This can be adjusted by setting the env var `S6_CMD_WAIT_FOR_SERVICES_MAXTIME`
+to a value higher than the default of `5000`.
+
 ## Example
 
 When using CloudFlare as reverse proxy:
