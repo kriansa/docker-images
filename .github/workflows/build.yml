@@ -38,7 +38,7 @@ jobs:
             for tag in "${input_tags[@]}"; do
               prefixed_tags+=("${image_name}:$tag")
             done
-            tags=$(IFS=,; echo "${tags_array[*]}")
+            tags=$(IFS=,; echo "${prefixed_tags[*]}")
           else
             tags="${image_name}:latest,${image_name}:${timestamp}"
           fi
