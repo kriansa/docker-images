@@ -36,11 +36,11 @@ jobs:
             IFS=',' read -ra input_tags <<< "${{ inputs.output_tags }}"
             prefixed_tags=()
             for tag in "${input_tags[@]}"; do
-              prefixed_tags+=("${image_name}:$tag")
+              prefixed_tags+=("${IMAGE_NAME}:$tag")
             done
             tags=$(IFS=,; echo "${prefixed_tags[*]}")
           else
-            tags="${image_name}:latest,${image_name}:${timestamp}"
+            tags="${IMAGE_NAME}:latest,${IMAGE_NAME}:${timestamp}"
           fi
 
           echo "tags=${tags}" >> $GITHUB_OUTPUT
