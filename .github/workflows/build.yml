@@ -43,7 +43,7 @@ jobs:
             tags="${image_name}:latest,${image_name}:${timestamp}"
           fi
 
-          echo "name=tags::${TAGS}" >> $GITHUB_OUTPUT
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
 
       - name: Checkout
         uses: actions/checkout@v6
