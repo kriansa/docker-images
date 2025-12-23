@@ -29,7 +29,7 @@ jobs:
       - name: Set image tags
         id: image_tags
         run: |
-          TIMESTAMP=$(date '+%Y-%m-%d')
+          timestamp=$(date '+%Y-%m-%d')
 
           # Define the tagnames for this image
           if [ "${{ inputs.output_tags }}" != "" ]; then
@@ -43,7 +43,7 @@ jobs:
             tags="${image_name}:latest,${image_name}:${timestamp}"
           fi
 
-          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "tags=${tags}" >> $GITHUB_OUTPUT
 
       - name: Checkout
         uses: actions/checkout@v6
