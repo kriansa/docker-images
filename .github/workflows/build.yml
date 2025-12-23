@@ -2,7 +2,7 @@
 name: Build docker image
 
 on:
-  workflow_call:
+  workflow_call: &inputs
     inputs:
       image_path:
         required: true
@@ -16,6 +16,7 @@ on:
         required: false
         description: Build arguments to pass to the Docker build process. (e.g. VAR=value,VAR2=value2)
         type: string
+  workflow_dispatch: *inputs
 
 env:
   IMAGE_NAME: ghcr.io/kriansa/docker-images/${{ inputs.image_path }}
