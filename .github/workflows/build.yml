@@ -66,6 +66,8 @@ jobs:
           push: true
           tags: ${{ steps.image_tags.outputs.tags }}
           build-args: ${{ inputs.build_args }}
+          cache-from: type=gha,scope=${{ inputs.image_path }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.image_path }}
 
       - name: Delete old images
         uses: actions/delete-package-versions@v5
