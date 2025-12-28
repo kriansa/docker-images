@@ -7,5 +7,6 @@ RUN addgroup -Sg 900 msmtp && adduser -SDHu 900 -G msmtp msmtp && \
 
 USER msmtp
 VOLUME /etc/msmtprc
+ENTRYPOINT ["dumb-init"]
 
-CMD ["dumb-init", "msmtpd", "--interface=0.0.0.0", "--port=25"]
+CMD ["msmtpd", "--interface=0.0.0.0", "--port=25"]
