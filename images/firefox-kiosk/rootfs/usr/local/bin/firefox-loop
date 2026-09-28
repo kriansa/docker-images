@@ -1,0 +1,34 @@
+#!/bin/sh
+# Keep Firefox alive for as long as the compositor is up.
+#
+# labwc starts this as its -S command, so it inherits a session that is already up and needs no
+# wait-for-socket dance. What labwc's -S does NOT do is restart anything: it runs the command once
+# and lets it die. Without this loop a crashed Firefox leaves the stream showing an empty desktop
+# while every unit still reads green, which on an unattended wall display is the worst shape of
+# failure there is.
+#
+# The backoff is the point. A profile that cannot be opened at all — a leftover lock, a corrupt
+# prefs file — fails in milliseconds, and a bare `while true` would turn that into a busy loop
+# pinning a core on a host that has other work to do.
+set -u
+
+PROFILE=/data/firefox
+backoff=1
+
+while true; do
+  started=$(date +%s)
+
+  # --no-remote stops a restart from attaching to a half-dead previous instance and exiting
+  # immediately, which would spin this loop without Firefox ever appearing.
+  # --profile takes a path, so the profile is a plain directory with no profiles.ini to corrupt.
+  firefox --kiosk --no-remote --profile "$PROFILE" "${STREAM_HOME_URL:-about:blank}" || true
+
+  if [ $(( $(date +%s) - started )) -ge 30 ]; then
+    backoff=1
+  elif [ "$backoff" -lt 30 ]; then
+    backoff=$(( backoff * 2 ))
+  fi
+
+  echo "firefox-loop: exited, restarting in ${backoff}s" >&2
+  sleep "$backoff"
+done

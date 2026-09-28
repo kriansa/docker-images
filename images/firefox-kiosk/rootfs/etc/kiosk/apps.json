@@ -1,0 +1,18 @@
+{
+  "env": {},
+  "apps": [
+    {
+      "name": "Firefox",
+      "auto-detach": true,
+      "wait-all": true,
+      "exclude-global-prep-cmd": false,
+      "prep-cmd": [
+        {
+          "do": "/usr/local/bin/stream-prep start",
+          "undo": "/usr/local/bin/stream-prep stop",
+          "elevated": false
+        }
+      ]
+    }
+  ]
+}

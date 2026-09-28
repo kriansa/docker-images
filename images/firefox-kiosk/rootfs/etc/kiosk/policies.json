@@ -1,0 +1,52 @@
+{
+  "policies": {
+    "DisableAppUpdate": true,
+    "DisableTelemetry": true,
+    "DisableFirefoxStudies": true,
+    "DisableFirefoxAccounts": true,
+    "DisableProfileImport": true,
+    "DisableProfileRefresh": true,
+    "DisableSystemAddonUpdate": true,
+    "DontCheckDefaultBrowser": true,
+    "OverrideFirstRunPage": "",
+    "OverridePostUpdatePage": "",
+    "NoDefaultBookmarks": true,
+    "PromptForDownloadLocation": false,
+    "UserMessaging": {
+      "WhatsNew": false,
+      "ExtensionRecommendations": false,
+      "FeatureRecommendations": false,
+      "SkipOnboarding": true
+    },
+    "Preferences": {
+      "media.hardware-video-decoding.enabled": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "media.hardware-video-decoding.force-enabled": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "media.rdd-ffmpeg.enabled": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "media.videocontrols.picture-in-picture.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "media.videocontrols.picture-in-picture.video-toggle.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "gfx.webrender.all": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "widget.dmabuf.force-enabled": {
+        "Value": true,
+        "Status": "locked"
+      }
+    }
+  }
+}

@@ -1,0 +1,49 @@
+#!/bin/bash
+# Hide the mouse pointer after KIOSK_CURSOR_IDLE_SECONDS without pointer activity.
+#
+# Firefox does not do this for us. It hides the pointer during its own fullscreen video playback,
+# which is not the state this kiosk sits in, so without this service the pointer stays wherever the
+# viewer left it, forever, in the middle of the wall display.
+#
+# Keyed on POINTER EVENTS, not on the compositor's idle notification, and that distinction is the
+# whole reason this script exists rather than a one-line swayidle invocation.
+#
+# swayidle asks the compositor whether the SESSION is idle, and the session here never is: Firefox
+# holds a Wayland idle inhibitor for as long as it plays video, and a camera wall plays video
+# forever. Measured on this host — with Firefox running, a 5-second idle threshold never fired in 25
+# seconds; kill Firefox and it fires within 3. There is no way around that from either side: labwc
+# exposes no setting to ignore inhibitors, swayidle has no flag to bypass them (its entire option
+# set is -h -C -d -w -S), and Firefox's media wake lock has no pref — `dom.screenwakelock.enabled`
+# governs only the JavaScript API. The image carries no dbus, so Firefox uses the Wayland protocol
+# directly and labwc honours it.
+#
+# Watching libinput instead asks the question actually wanted: has the pointer moved? A wall display
+# playing video is not "active" in any sense the viewer cares about.
+#
+# One property this gains for free: wtype injects through zwp_virtual_keyboard_manager_v1, which is
+# a Wayland protocol rather than a libinput device, so the synthetic keystroke does NOT register as
+# pointer activity and cannot retrigger this loop.
+#
+# Nothing unhides explicitly — labwc's HideCursor restores the pointer on the next motion by itself.
+# That also means a stopped service leaves the pointer hidden rather than visible, so "the cursor is
+# hidden" does NOT demonstrate that this is running. Move the pointer first, then watch it hide.
+set -u
+
+IDLE=${KIOSK_CURSOR_IDLE_SECONDS:-5}
+
+# Pointer, touch and tablet activity all count as "the viewer is doing something". Keyboard does
+# not: typing does not move the pointer, and hiding it while someone types is the wanted behaviour.
+libinput debug-events 2>/dev/null \
+  | grep --line-buffered -E "POINTER_MOTION|POINTER_BUTTON|POINTER_SCROLL|TOUCH_|TABLET_" \
+  | {
+      hidden=0
+      while :; do
+        if read -r -t "$IDLE" _; then
+          # Activity: labwc has already restored the pointer, so just re-arm.
+          hidden=0
+        elif [ "$hidden" -eq 0 ]; then
+          wtype -M logo -k F34 -m logo && hidden=1
+          echo "cursor-idle: no pointer activity for ${IDLE}s, pointer hidden"
+        fi
+      done
+    }

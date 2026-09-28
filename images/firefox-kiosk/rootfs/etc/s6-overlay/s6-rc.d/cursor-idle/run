@@ -1,0 +1,8 @@
+#!/bin/sh
+# Hide the pointer after a period of stillness. See /usr/local/bin/cursor-idle for why this watches
+# libinput rather than asking the compositor whether the session is idle.
+#
+# Gated on output-ready rather than labwc for the same reason Sunshine is: that gate is what
+# guarantees the Wayland socket exists, and wtype cannot connect without it.
+exec 2>&1
+exec drop-privs /usr/local/bin/cursor-idle

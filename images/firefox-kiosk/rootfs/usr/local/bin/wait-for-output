@@ -1,0 +1,23 @@
+#!/bin/sh
+# Block until the compositor is up and HEADLESS-1 exists.
+#
+# This gate exists for Sunshine specifically, and it is not cosmetic: Sunshine validates its
+# encoders at startup by performing a real capture. Start it before there is an output to capture
+# and it concludes NVENC is unusable for the life of the process — and says nothing about it. The
+# symptom is a stream that works perfectly at a fraction of the expected quality, traced hours later
+# to a startup race. Waiting here is the difference between hardware and software encoding.
+set -eu
+
+i=0
+while [ "$i" -lt 100 ]; do
+  if [ -S "${XDG_RUNTIME_DIR}/wayland-0" ] \
+     && drop-privs wlr-randr 2>/dev/null | grep -q '^HEADLESS-1'; then
+    echo "wait-for-output: HEADLESS-1 is up" >&2
+    exit 0
+  fi
+  i=$(( i + 1 ))
+  sleep 0.2
+done
+
+echo "wait-for-output: HEADLESS-1 never appeared after 20s" >&2
+exit 1

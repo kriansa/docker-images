@@ -1,0 +1,7 @@
+#!/bin/sh
+# Supervised separately from the compositor on purpose: a Sunshine crash should cost the viewer a
+# reconnect, not the browser session and every tab in it.
+#
+# Gated on output-ready, which is not optional — see wait-for-output for what starting early does.
+exec 2>&1
+exec drop-privs sunshine /data/sunshine/sunshine.conf

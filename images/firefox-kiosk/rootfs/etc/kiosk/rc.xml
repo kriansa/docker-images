@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<!--
+  labwc configuration for the kiosk session.
+
+  Two things here are not obvious and both have bitten people:
+
+  1. labwc loads its FULL default key and mouse bindings whenever the configuration defines none at
+     all — an empty <keyboard> section is not the same as no defaults. On a kiosk that means Alt-Tab,
+     the root menu and a window-close binding are reachable from the streamed session. The single
+     no-op binding in each section below is what suppresses them; deleting either one silently
+     restores the lot.
+
+  2. Fullscreen is asserted here rather than left to Firefox's own kiosk flag, which has a
+     long-standing race (Mozilla bug 1636168) where it comes up windowed. A compositor-side rule
+     does not care what Firefox decided.
+
+  Note for editors: XML forbids a double hyphen inside a comment, so command-line flags cannot be
+  written here with their leading dashes. labwc treats a parse error in this file as fatal, so the
+  mistake costs a crash loop, not a warning.
+-->
+<labwc_config>
+  <core>
+    <gap>0</gap>
+  </core>
+
+  <theme>
+    <keepBorder>no</keepBorder>
+  </theme>
+
+  <windowRules>
+    <windowRule identifier="firefox" serverDecoration="no" skipTaskbar="yes">
+      <action name="ToggleFullscreen"/>
+    </windowRule>
+  </windowRules>
+
+  <keyboard>
+    <!-- See note 1. This binding is deliberately unreachable, not useful: labwc loads its FULL
+         default bindings whenever the config defines none at all, so one no-op binding here and
+         one in <mouse> below are what keep Alt-Tab, the root menu and a window-close binding out
+         of the kiosk. F35 is chosen because no physical keyboard has one. -->
+    <keybind key="W-F35">
+      <action name="None"/>
+    </keybind>
+
+    <!--
+      Hide the pointer after a few seconds of stillness. labwc has no timeout setting for this in
+      any released version, so the only route to HideCursor is a binding, and the only route to a
+      binding from a timer is to synthesise the keystroke. The cursor-idle service does that.
+
+      F35 above and F34 here are chosen because no physical keyboard has them, so a viewer driving
+      the session cannot trigger either by accident. labwc consumes bound keys, so this never
+      reaches the page.
+
+      HideCursor alone, with no WarpCursor: the pointer reappears where the viewer left it rather
+      than jumping to a corner. The trade is that a pointer left resting on a hover target keeps
+      that hover state while hidden.
+    -->
+    <keybind key="W-F34">
+      <action name="HideCursor"/>
+    </keybind>
+  </keyboard>
+
+  <!-- See note 1. Without a mousebind, right-click on the desktop opens labwc's root menu. -->
+  <mouse>
+    <context name="Root">
+      <mousebind button="Right" action="Press">
+        <action name="None"/>
+      </mousebind>
+    </context>
+  </mouse>
+
+  <!--
+    Physical host input reaches this container through the bind-mounted /dev/input, which on a
+    headless server usually means a console keyboard nobody touches or a hypervisor's emulated
+    keyboard and tablet. A stray host event would move the streamed cursor out from under whoever is
+    using it, so ignore those devices here.
+
+    Filled in from `libinput list-devices` after first start rather than guessed: labwc matches on
+    the device NAME, and a wrong name is a silent no-op. Do NOT disable by category — Sunshine's
+    virtual keyboard and mouse are the same categories and would go with them.
+  -->
+  <libinput>
+    <!-- <device name="..."><ignore>yes</ignore></device> -->
+  </libinput>
+</labwc_config>

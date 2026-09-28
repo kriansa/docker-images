@@ -1,0 +1,95 @@
+#!/bin/sh
+# Lay out /data on first start, seed the files the app expects, and re-assert the few settings that
+# belong to the deployment rather than to the app.
+#
+# Two different policies here, deliberately:
+#
+#   SEEDED ONCE — sunshine.conf, apps.json and user.js as whole files. Sunshine rewrites its config
+#   and its app list from the web UI and Firefox owns its profile, so re-asserting these wholesale
+#   on every start would silently discard changes made through the UI.
+#
+#   ENFORCED EVERY START — bind_address, csrf_allowed_origins, channels, sunshine_name, and the app
+#   name inside apps.json. Individual values re-asserted inside files that are otherwise left alone,
+#   so everything else the UI changed survives. Left to the seed-once rule these would keep a stale
+#   answer after the address, the vhost or the name they are given changed, and the failure would
+#   look like a Sunshine bug rather than drift. The cost is that none of them can be changed from
+#   the web UI: an edit there survives until the next restart and is then overwritten.
+set -eu
+
+for d in /data/home /data/firefox /data/sunshine/credentials /data/home/Downloads; do
+  [ -d "$d" ] || mkdir -p "$d"
+done
+
+# XDG_RUNTIME_DIR. The quadlet mounts it as a tmpfs so it cannot survive a restart — a stale Wayland
+# socket there brings the unit up with no display — but podman rejects uid=/gid= as tmpfs options,
+# so the ownership has to be applied here instead, while this oneshot still runs as root.
+mkdir -p "${XDG_RUNTIME_DIR}"
+chown 10000:10000 "${XDG_RUNTIME_DIR}"
+chmod 0700 "${XDG_RUNTIME_DIR}"
+
+seed() {
+  [ -f "$2" ] || cp "$1" "$2"
+}
+
+seed /etc/kiosk/sunshine.conf /data/sunshine/sunshine.conf
+seed /etc/kiosk/apps.json     /data/sunshine/apps.json
+seed /etc/kiosk/user.js       /data/firefox/user.js
+
+# Set a key to the value the quadlet gave us, replacing whatever is there. An empty value removes
+# the key entirely rather than writing a blank one, which Sunshine would read as a literal empty
+# setting rather than as "unset".
+enforce() {
+  key=$1
+  val=${2:-}
+  conf=/data/sunshine/sunshine.conf
+
+  sed -i "/^${key}[[:space:]]*=/d" "$conf"
+  [ -n "$val" ] && printf '%s = %s\n' "$key" "$val" >> "$conf"
+  return 0
+}
+
+enforce bind_address "${SUNSHINE_BIND_ADDRESS:-}"
+# Sunshine rejects any state-changing request whose Origin it does not recognise, and it only knows
+# about localhost and its own bind address by default. Reaching the UI through a reverse proxy
+# means the browser sends the proxy's hostname, so without this every login attempt fails with
+# "The request was blocked by CSRF protection" — which reads like a browser problem and is not.
+enforce csrf_allowed_origins "${SUNSHINE_CSRF_ORIGINS:-}"
+# How many clients may hold the session at once. Sunshine defaults to 1, and the second client is
+# then turned away with "An app is already running on this host" — which reads like a stuck session
+# rather than a configured limit. They share one screen and one cursor; this does not give them
+# separate desktops.
+enforce channels "${SUNSHINE_CHANNELS:-}"
+# The machine name Moonlight lists before a client picks an app. Left empty, the key is removed and
+# Sunshine falls back to the host's own name. A literal # cannot appear in it: the config parser
+# reads that as the start of a comment and would truncate the name there.
+enforce sunshine_name "${SUNSHINE_HOST_NAME:-}"
+
+# The app name clients launch by, which lives in apps.json rather than sunshine.conf and so needs a
+# JSON edit rather than the line rewrite above.
+#
+# The app is found by its prep-cmd, NOT by its position: the web UI can add apps ahead of it, and
+# renaming whichever app happens to be first would then rename the wrong one. If no app matches —
+# someone deleted it through the UI — this changes nothing rather than inventing an entry.
+#
+# Written to a temporary file and moved into place so that a jq failure leaves the previous
+# apps.json intact instead of truncating it. That failure is fatal under set -e, deliberately: if
+# apps.json cannot be parsed here, Sunshine cannot read it either, and stopping now names the cause
+# far better than the empty app list Sunshine would otherwise present.
+enforce_app_name() {
+  apps=/data/sunshine/apps.json
+
+  jq --arg name "$1" '
+    .apps |= map(
+      if any(."prep-cmd"[]?; .do == "/usr/local/bin/stream-prep start")
+      then .name = $name
+      else . end
+    )
+  ' "$apps" > "$apps.new"
+  mv "$apps.new" "$apps"
+}
+
+enforce_app_name "${SUNSHINE_APP_NAME:-Firefox}"
+
+chown 10000:10000 /data /data/home /data/home/Downloads /data/firefox \
+                  /data/sunshine /data/sunshine/credentials \
+                  /data/sunshine/sunshine.conf /data/sunshine/apps.json /data/firefox/user.js

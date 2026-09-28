@@ -1,0 +1,28 @@
+#!/bin/sh
+# Sunshine prep-cmd: match the output to what the connecting client asked for, and put Firefox back
+# in front. Sunshine execs this directly rather than through a shell, so ${VAR} expansion has to
+# happen here and not in apps.json.
+#
+# Every step is best-effort on purpose. A prep-cmd that exits non-zero aborts the whole session, and
+# every failure mode here is cosmetic: wlroots' headless default is already 1280x720@60, which is
+# what most clients request, so the primary case is correct even if none of this runs.
+set -u
+
+# The output is PINNED, not matched to the connecting client — deliberately, and this is the one
+# thing to understand before changing it.
+#
+# Sunshine runs a single session that every connected client shares (channels > 1 lets them connect
+# at once; it does not give them separate desktops). Sizing the output to whoever just connected
+# therefore resizes it under everyone already watching: a permanently-connected wall display would
+# jump to a laptop's geometry the moment that laptop connects, and stay there after it disconnects
+# again. SUNSHINE_CLIENT_WIDTH
+# and friends are ignored for that reason. Clients whose own resolution differs just scale locally,
+# which Moonlight does well.
+case "${1:-}" in
+  start|stop)
+    wlr-randr --output HEADLESS-1 --custom-mode "${KIOSK_OUTPUT_MODE:-1280x720@60Hz}" \
+      || echo "stream-prep: could not assert ${KIOSK_OUTPUT_MODE:-1280x720@60Hz}, leaving mode as-is" >&2
+    ;;
+esac
+
+exit 0

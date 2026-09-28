@@ -1,0 +1,18 @@
+#!/bin/sh
+# Run a command as the kiosk user, keeping the supplementary groups podman granted.
+#
+# s6-setuidgid is the obvious tool here and it is the wrong one: it re-derives the supplementary
+# group list from /etc/group for the named user, which throws away the host input/render/video
+# groups that the quadlet adds with GroupAdd=. The container would then start perfectly and be
+# unable to open /dev/uinput or the render node — a failure that looks like a compositor bug.
+#
+# So carry the inherited list through explicitly, minus gid 0: PID 1 is root because s6 needs to be,
+# but nothing below it has any reason to stay in the root group.
+#
+# Called by absolute path: /command is only on PATH under s6's /init, and this script is also used
+# by hand when debugging the image with the entrypoint bypassed.
+set -eu
+
+gids=$(id -G | tr ' ' '\n' | grep -vx 0 | paste -sd, -)
+
+exec /command/s6-applyuidgid -u 10000 -g 10000 ${gids:+-G "$gids"} "$@"

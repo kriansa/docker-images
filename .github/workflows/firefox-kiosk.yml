@@ -1,0 +1,16 @@
+---
+name: Build firefox-kiosk image
+
+on:
+  push:
+    paths:
+      - .github/workflows/firefox-kiosk.yml
+      - images/firefox-kiosk/**
+    branches:
+      - main
+
+jobs:
+  build-main-image:
+    uses: ./.github/workflows/build.yml
+    with:
+      image_path: firefox-kiosk

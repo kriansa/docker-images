@@ -1,0 +1,18 @@
+#!/bin/sh
+# The compositor, and the process whose death takes the container down.
+#
+# Firefox is labwc's own -S startup command rather than a service of its own, so labwc owns the
+# "nothing starts before the Wayland socket exists" ordering natively and s6 never has to express
+# it. That is why there is no wayland-ready gate here: the only gate left, output-ready, exists for
+# Sunshine and has independent work to do.
+#
+# -S (not -s): labwc terminates when the command exits. firefox-loop is an infinite loop, so it
+# should never exit — but if it ever does, -S turns that into "the session dies and s6 restarts it"
+# instead of "labwc keeps running forever with nothing on screen". Recovery at zero cost.
+#
+# LABWC_ARGS is a debugging seam: set it to -d in the quadlet to get wlroots' full device, renderer
+# and DRM-format logging without rebuilding the image. That log is how you tell "libinput never saw
+# the virtual input devices" apart from "labwc saw them and something above it dropped the events",
+# which are the two failure modes that both present as a working picture with a dead mouse.
+exec 2>&1
+exec drop-privs labwc ${LABWC_ARGS:-} -C /etc/kiosk -S /usr/local/bin/firefox-loop
