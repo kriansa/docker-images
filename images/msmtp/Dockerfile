@@ -1,4 +1,4 @@
-FROM docker.io/library/alpine:3.23.2
+FROM docker.io/library/alpine:3.24.3
 
 ARG MSMTP_VERSION=1.8.32-r1
 RUN addgroup -Sg 900 msmtp && adduser -SDHu 900 -G msmtp msmtp && \
