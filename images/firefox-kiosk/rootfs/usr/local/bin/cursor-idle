@@ -38,10 +38,24 @@ libinput debug-events 2>/dev/null \
   | {
       hidden=0
       while :; do
-        if read -r -t "$IDLE" _; then
+        read -r -t "$IDLE" _
+        status=$?
+
+        if [ "$status" -eq 0 ]; then
           # Activity: labwc has already restored the pointer, so just re-arm.
           hidden=0
-        elif [ "$hidden" -eq 0 ]; then
+          continue
+        fi
+
+        # read reports a timeout with a status above 128. Anything else means libinput stopped
+        # producing output, and every later read would then fail at once, spinning this loop on a
+        # full CPU core. Exiting lets s6 start the service again.
+        if [ "$status" -le 128 ]; then
+          echo "cursor-idle: libinput stopped reporting input, restarting"
+          exit 1
+        fi
+
+        if [ "$hidden" -eq 0 ]; then
           wtype -M logo -k F34 -m logo && hidden=1
           echo "cursor-idle: no pointer activity for ${IDLE}s, pointer hidden"
         fi
