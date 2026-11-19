@@ -59,11 +59,11 @@ Two policies, and the split is deliberate — see `rootfs/usr/local/bin/kiosk-se
 rewrites its config from the web UI and Firefox owns its profile, so re-asserting these would
 discard changes made through the UI.
 
-The same rule is why the state directory cannot be migrated. `/data` replaced an earlier `/state`,
-and a volume written under the old name keeps a `sunshine.conf` whose `pkey`, `cert` and `file_apps`
-still point at `/state/...` — paths seeding will never rewrite. Sunshine would regenerate its
-certificates on every start and no client would stay paired. Start from an empty volume instead:
-clients pair once more and the web UI password is set again.
+The same rule is what ties a volume to the path it was seeded at. `sunshine.conf` records absolute
+paths for `pkey`, `cert`, `credentials_file`, `file_state` and `file_apps`, and seeding will never
+rewrite them — so mounting an existing volume anywhere other than `/data` makes Sunshine read and
+write its identity inside the container instead, regenerate its certificates on every start, and
+lose every pairing. Either keep the mount point, or start from an empty volume and pair again.
 
 **Enforced every start**: `bind_address`, `csrf_allowed_origins`, `channels`, `sunshine_name`, and
 the app's `name` inside `apps.json`. These are individual values re-asserted inside files that are

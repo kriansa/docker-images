@@ -58,11 +58,12 @@ re-derives supplementary groups from `/etc/group` and discards the host groups p
 default bindings whenever the config defines none at all. An empty `<keyboard>` section is not
 enough — one no-op key binding *and* one no-op mouse binding are what suppress them.
 
-**Clients need re-pairing after every restart, and the app list is missing `Firefox`.** The volume
-was written when state lived at `/state` and is now mounted at `/data`. `sunshine.conf` is seeded
-once, so its copy on that volume still names `/state/...` for `pkey`, `cert`, `credentials_file`,
+**Clients need re-pairing after every restart, and the app list is empty.** The volume is mounted
+somewhere other than `/data`. `sunshine.conf` is seeded once and records absolute paths, so its copy
+on that volume still names the path it was seeded at for `pkey`, `cert`, `credentials_file`,
 `file_state` and `file_apps`. Sunshine reads and writes those inside the container instead of on the
-volume, so nothing it generates survives. There is no migration by design — use an empty volume.
+volume, so nothing it generates survives. Seeding will not rewrite them: fix the mount point, or
+rewrite those five keys by hand.
 
 **An app or host renamed in the Sunshine web UI goes back to its old name after a restart.** Not a
 bug and not Sunshine losing the edit. `kiosk-seed` re-asserts `sunshine_name` and the app's `name`
