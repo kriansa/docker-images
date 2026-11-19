@@ -1,0 +1,53 @@
+#!/bin/bash
+# Reload the page every KIOSK_IDLE_REFRESH_SECONDS for as long as nobody is using the kiosk.
+#
+# An unattended display left on one page for days drifts: video players stall, a websocket drops
+# and never reconnects, the page's own memory grows. Reloading clears all of that. Doing it only
+# while nobody is touching the kiosk is what keeps it from pulling the page out from under someone
+# who is using it.
+#
+# Idleness comes from libinput, for the same reason as cursor-idle: the compositor never considers
+# the session idle while Firefox plays video. Unlike cursor-idle, key presses count as activity
+# here, so someone typing into the page does not have it reloaded under them.
+#
+# The reload is an F5 sent through wtype. That goes through a Wayland protocol rather than an input
+# device, so libinput never sees it and the reload does not count as activity — which is what lets
+# the timer fire again KIOSK_IDLE_REFRESH_SECONDS later while the kiosk stays idle.
+#
+# F5 reloads whatever page is open, not $STREAM_HOME_URL. A viewer who navigated elsewhere and
+# walked away leaves the kiosk reloading that page until someone navigates back.
+set -u
+
+IDLE=${KIOSK_IDLE_REFRESH_SECONDS:-0}
+
+# Turned off is the image's default. The service still has to stay up, because s6 would restart a
+# service that exits, and doing that every second is pointless work.
+case "$IDLE" in
+  ''|0)
+    exec sleep infinity
+    ;;
+  *[!0-9]*)
+    echo "idle-refresh: KIOSK_IDLE_REFRESH_SECONDS must be a whole number of seconds, got '$IDLE'. Not reloading."
+    exec sleep infinity
+    ;;
+esac
+
+libinput debug-events 2>/dev/null \
+  | grep --line-buffered -E "POINTER_|KEYBOARD_KEY|TOUCH_|TABLET_|GESTURE_" \
+  | while :; do
+      read -r -t "$IDLE" _
+      status=$?
+
+      # Activity: start the wait over.
+      [ "$status" -eq 0 ] && continue
+
+      # read reports a timeout with a status above 128. Anything else means libinput stopped
+      # producing output. Without this exit, every later read would fail immediately and the page
+      # would be reloaded in a tight loop. Exiting lets s6 start the service again.
+      if [ "$status" -le 128 ]; then
+        echo "idle-refresh: libinput stopped reporting input, restarting"
+        exit 1
+      fi
+
+      wtype -k F5 && echo "idle-refresh: no input for ${IDLE}s, page reloaded"
+    done

@@ -70,6 +70,11 @@ bug and not Sunshine losing the edit. `kiosk-seed` re-asserts `sunshine_name` an
 on every start from `SUNSHINE_HOST_NAME` and `SUNSHINE_APP_NAME`, the same way it re-asserts
 `bind_address`. The environment owns both names; the UI cannot. Change the variable instead.
 
+**The page reloads by itself every few minutes.** If `idle-refresh: ... page reloaded` is in the log,
+that is `KIOSK_IDLE_REFRESH_SECONDS` doing its job while nobody is using the kiosk. If instead the
+log has `firefox-loop: exited, restarting`, Firefox itself died and was started again, which is a
+different problem — on a memory-limited container, usually the out-of-memory killer.
+
 **A deploy reports `changed=0` but the container runs the old image.** Rebuilding under the same tag
 changes nothing the quadlet can see. Restart the unit explicitly until the image reference is a
 versioned registry tag.

@@ -44,7 +44,7 @@ RUN dnf -y install --setopt=install_weak_deps=False \
       # Idle cursor hiding, which labwc cannot do alone and Firefox does not do for this kiosk.
       # wtype presses the binding rc.xml maps to HideCursor, through the virtual-keyboard protocol
       # so no /dev/uinput access is involved — and so the keystroke does not count as pointer
-      # activity. The timer comes from libinput (libinput-utils, above), NOT from a compositor idle
+      # activity. The idle-refresh service uses it the same way to press F5. The timer comes from libinput (libinput-utils, above), NOT from a compositor idle
       # notification; see the cursor-idle service for why that distinction is load-bearing.
       wtype \
       xz tar \
@@ -156,6 +156,9 @@ ENV XDG_RUNTIME_DIR=/run/user/10000 \
     KIOSK_OUTPUT_MODE=1280x720@60Hz \
     # Seconds of pointer stillness before the cursor is hidden, by the cursor-idle service.
     KIOSK_CURSOR_IDLE_SECONDS=5 \
+    # Seconds without pointer or keyboard input before the idle-refresh service reloads the page,
+    # and again each time that much more passes with no input. 0 turns it off.
+    KIOSK_IDLE_REFRESH_SECONDS=0 \
     # A failed startup should crash the container so systemd's Restart=always owns recovery,
     # rather than leaving a half-built session up looking healthy.
     S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \

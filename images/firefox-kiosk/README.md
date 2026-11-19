@@ -51,6 +51,13 @@ maps to it. The timer comes from libinput rather than a compositor idle notifica
 Firefox holds a Wayland idle inhibitor while playing video and a video wall therefore never goes
 idle.
 
+The `idle-refresh` service works the same way, pressing F5 instead. With
+`$KIOSK_IDLE_REFRESH_SECONDS` set, it reloads the open page after that long with no pointer or
+keyboard input, and again each time that much more passes, so a page left unattended for days does
+not drift. It is off by default (`0`). It reloads whatever page is open, not `$STREAM_HOME_URL`.
+A reload also leaves any fullscreen view the page itself entered, and browsers only let a page enter
+fullscreen in response to a click or key press, so a page that offers no key for it stays out.
+
 ## Configuration: seeded once, or enforced every start
 
 Two policies, and the split is deliberate — see `rootfs/usr/local/bin/kiosk-seed`.

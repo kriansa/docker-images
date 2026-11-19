@@ -1,0 +1,6 @@
+#!/bin/sh
+# Reload the page after a period with no input. See /usr/local/bin/idle-refresh.
+#
+# Gated on output-ready for the same reason cursor-idle is: wtype needs the Wayland socket to exist.
+exec 2>&1
+exec drop-privs /usr/local/bin/idle-refresh
